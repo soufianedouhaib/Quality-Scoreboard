@@ -7,9 +7,14 @@
 <style>
   html,body{margin:0;padding:0;height:100%;background:#0E1116;overflow:hidden}
   iframe{display:block;width:100%;height:100%;border:0}
-  #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-       color:#7E8899;font:500 22px/1.5 "Courier New",monospace;text-align:center;padding:0 8vw}
+  #msg{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;
+       align-items:center;justify-content:center;padding:0 8vw}
+  /* Wrapped in one element on purpose: a bare text node in a flex
+     container becomes its own flex item and loses its edge spaces. */
+  #msg p{margin:0;max-width:70ch;text-align:center;color:#7E8899;
+         font:500 22px/1.6 "IBM Plex Mono","Courier New",monospace}
   #msg code{color:#E0B33C}
+  #msg .h{display:block;color:#E8EDF4;font-size:26px;margin-bottom:18px}
 </style>
 </head>
 <body>
@@ -25,16 +30,50 @@
   var RELOAD_MINUTES = 360; // outer hard-reload interval (6 h)
 </script>
 
-<div id="msg">Set <code>EXEC_URL</code> in index.html to your Apps&nbsp;Script&nbsp;/exec link.</div>
+<div id="msg"><p>
+  <span class="h">Almost there</span>
+  Paste your Apps&nbsp;Script <code>/exec</code> URL into
+  <code>EXEC_URL</code> at the top of <code>index.html</code>.
+  <br><br>
+  To try one without committing, append
+  <code>?exec=&lt;your /exec URL&gt;</code> to this page's address.
+</p></div>
 
 <script>
 (function () {
-  if (!EXEC_URL) return;
+  /* Manual query parsing — URLSearchParams is missing on older TV engines. */
+  var params = {}, raw = window.location.search.replace(/^\?/, '');
+  if (raw) {
+    raw.split('&').forEach(function (kv) {
+      if (!kv) return;
+      var i = kv.indexOf('=');
+      var k = i < 0 ? kv : kv.slice(0, i);
+      var v = i < 0 ? '' : kv.slice(i + 1);
+      params[decodeURIComponent(k)] = v;   // value kept encoded for passthrough
+    });
+  }
+
+  /* ?exec= lets you verify a deployment before editing this file.
+     Restricted to script.google.com so a public page on your domain can
+     never be turned into a frame for someone else's content. */
+  var url = EXEC_URL;
+  if (params.exec) {
+    var candidate = decodeURIComponent(params.exec);
+    if (/^https:\/\/script\.google\.com\//.test(candidate)) url = candidate;
+  }
+
+  if (!url) return;                                    // leave the message up
   document.getElementById('msg').style.display = 'none';
 
-  /* Pass ?only= / ?rot= / ?ref= straight through, so
-     yoursite.github.io/qa-board/?only=month pins a single view. */
-  var qs = window.location.search.replace(/^\?/, '');
+  /* Everything except ?exec= is forwarded to the board, so
+     .../Quality-Scoreboard/?only=month pins a single view. */
+  var pass = [];
+  for (var k in params) {
+    if (params.hasOwnProperty(k) && k !== 'exec') {
+      pass.push(encodeURIComponent(k) + '=' + params[k]);
+    }
+  }
+  var qs = pass.join('&');
 
   var frame = document.createElement('iframe');
   frame.setAttribute('allowfullscreen', '');
@@ -42,9 +81,9 @@
   document.body.appendChild(frame);
 
   function load() {
-    var sep = EXEC_URL.indexOf('?') >= 0 ? '&' : '?';
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
     /* cache-buster forces a genuinely fresh render each time */
-    frame.src = EXEC_URL + sep + (qs ? qs + '&' : '') + 'cb=' + Date.now();
+    frame.src = url + sep + (qs ? qs + '&' : '') + 'cb=' + Date.now();
   }
 
   load();
