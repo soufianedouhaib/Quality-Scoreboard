@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA Wall Board</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;background:#0E1116;overflow:hidden}
+  iframe{display:block;width:100%;height:100%;border:0}
+  #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+       color:#7E8899;font:500 22px/1.5 "Courier New",monospace;text-align:center;padding:0 8vw}
+  #msg code{color:#E0B33C}
+</style>
+</head>
+<body>
+
+<!-- ==========================================================
+     STEP 1 of 1: paste your deployed Apps Script /exec URL below.
+     It looks like:
+       https://script.google.com/macros/s/AKfycb....../exec
+     Everything else works as-is.
+     ========================================================== -->
+<script>
+  var EXEC_URL = '';        // <-- paste between the quotes
+  var RELOAD_MINUTES = 360; // outer hard-reload interval (6 h)
+</script>
+
+<div id="msg">Set <code>EXEC_URL</code> in index.html to your Apps&nbsp;Script&nbsp;/exec link.</div>
+
+<script>
+(function () {
+  if (!EXEC_URL) return;
+  document.getElementById('msg').style.display = 'none';
+
+  /* Pass ?only= / ?rot= / ?ref= straight through, so
+     yoursite.github.io/qa-board/?only=month pins a single view. */
+  var qs = window.location.search.replace(/^\?/, '');
+
+  var frame = document.createElement('iframe');
+  frame.setAttribute('allowfullscreen', '');
+  frame.setAttribute('scrolling', 'no');
+  document.body.appendChild(frame);
+
+  function load() {
+    var sep = EXEC_URL.indexOf('?') >= 0 ? '&' : '?';
+    /* cache-buster forces a genuinely fresh render each time */
+    frame.src = EXEC_URL + sep + (qs ? qs + '&' : '') + 'cb=' + Date.now();
+  }
+
+  load();
+
+  /* Because this outer page owns the iframe element, resetting its src is
+     always permitted — no cross-origin top-frame navigation involved. This
+     is the most reliable refresh path of the three the board can use. */
+  setInterval(load, RELOAD_MINUTES * 60000);
+
+  /* A TV that was asleep or off-network comes back to a fresh board. */
+  window.addEventListener('online', load);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) load();
+  });
+})();
+</script>
+
+</body>
+</html>
