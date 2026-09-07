@@ -26,7 +26,11 @@
      Everything else works as-is.
      ========================================================== -->
 <script>
-  var EXEC_URL = '';        // <-- paste between the quotes
+  /* NOTE: this is the generic /macros/s/.../exec form, NOT the
+     /a/macros/aaico.com/... form the editor shows you. The domain-scoped
+     one redirects anonymous visitors to a Google sign-in page. Same
+     deployment, same id — only the prefix differs. */
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbx3_bnntt_zCODdQ4dx3Tg46iaqFw8yVWL6Ke7l_HzQ97AXw1yAXa2p5DcFE0sSmLl9/exec';
   var RELOAD_MINUTES = 360; // outer hard-reload interval (6 h)
 </script>
 
